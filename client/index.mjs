@@ -10,12 +10,30 @@ document.querySelector("#start").addEventListener("submit", e => {
 
 const main = apiKey => {
   const ws = connect(apiKey);
-  ws.addEventListener("message", console.log);
+  ws.addEventListener("message", message => {
+    const data = JSON.parse(message.data);
+    switch(data.type) {
+      case 'renderMap':
+        drawer.putArray(data.payload);
+        break;
+      case 'drawPoint':
+        drawer.putArray(data.payload);
+        break;
+      case 'timeout':
+        console.log(`You can draw at ${data.nextTime}`);
+        timeout.next = new Date(data.nextTime);
+        break;
+    }
+  });
 
-  timeout.next = new Date();
   drawer.onClick = (x, y) => {
-    drawer.put(x, y, picker.color);
-  };
+    ws.send(JSON.stringify({
+      type: 'placeSet',
+      playload: {
+        x, y, color: picker.color,
+      }
+    }))
+  }
 };
 
 const connect = apiKey => {
